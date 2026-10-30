@@ -1,0 +1,6 @@
+ROOT_DIR: "/home/ubuntu/shared/github/espenhgn/hunt_vcf2plink"
+DOCKER: "ghcr.io/espenhgn/hunt_vcf2plink:0.1.0"
+VCF_DIR: "/home/ubuntu/shared/data/vcf"
+GENO_FILE_PREFIX: "CHR1_22_PID107822"
+OUT_DIR: "/home/ubuntu/shared/data/plink/v20261030"
+COVARIATES_FILE: "/home/ubuntu/shared/data/covariates/Masterkey_DATASET_PID107822_20250526.txt.gz"
