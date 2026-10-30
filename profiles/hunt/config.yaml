@@ -1,0 +1,11 @@
+# Snakemake profile for a HUNT Cloud lab VM (no job scheduler; local execution).
+# Adjust cores and mem_mb to the VM size. Usage:
+#   snakemake --profile profiles/hunt
+snakefile: workflow/Snakefile
+cores: 32
+resources:
+  - mem_mb=230000
+printshellcmds: true
+keep-going: true
+rerun-incomplete: true
+latency-wait: 60

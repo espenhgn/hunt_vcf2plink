@@ -1,0 +1,41 @@
+# Synthetic test data set (test/make_test_data.py); run from the repository root:
+#   snakemake --configfile test/config.yaml --cores 4
+ROOT_DIR: ""  # repository root
+DOCKER: "ghcr.io/espenhgn/hunt_vcf2plink:0.1.0"
+
+VCF_DIR: "test/data/vcf"
+VCF_FILE: "CHR{chr}_TEST.vcf.gz"
+CHROMS: [22, X]
+
+OUT_DIR: "test/output"
+FILE_STEM: "CHR{chr}_TEST"
+GENO_FILE_PREFIX: "CHR22X_TEST"
+KEEP_GRCH37: false
+
+COVARIATES_FILE: "test/data/covariates/covariates_TEST.txt.gz"
+COVARIATES_ID_COL: "PID"
+COVARIATES_SEX_COL: "Sex"
+MIN_SEX_MATCH: 0.95
+
+QC:
+  dosage_field: "DS"
+  hard_call_threshold: 0.1
+  min_info: 0.3
+  maf: 0.005
+  geno: 0.05
+  hwe: "1E-50 0.001 midp"
+
+REF_FASTA_GRCH38: "test/data/ref/GRCh38_test.fa.zst"
+TRIPLE_LIFTOVER: "/opt/triple-liftOver/tripleliftover_v133.pl"
+PCA_REF_PREFIX: "src/pca/pgen/hgdp1kgp_chr_autosomes.pca_unrelated"
+N_PC: 40
+PCA_MIN_OVERLAP: 0.01  # chr22 holds ~1.8% of the reference PCA variants
+
+PLINK2: "plink2"
+
+# every key in config.yaml RESOURCES must be overridden, as --configfile is merged into it
+RESOURCES:
+  default: {threads: 1, mem_mb: 2000}
+  vcf2pgen_b37: {threads: 1, mem_mb: 2000}
+  merge_aligned: {threads: 1, mem_mb: 2000}
+  pca_project: {threads: 1, mem_mb: 2000}

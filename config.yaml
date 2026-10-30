@@ -1,6 +1,44 @@
-ROOT_DIR: "/home/ubuntu/shared/github/espenhgn/hunt_vcf2plink"
+ROOT_DIR: "/home/ubuntu/shared/github/espenhgn/hunt_vcf2plink"  # repo checkout; relative paths below resolve against it
 DOCKER: "ghcr.io/espenhgn/hunt_vcf2plink:0.1.0"
+
+# input: per-chromosome VCF files (GRCh37), {chr} is replaced by each entry of CHROMS
 VCF_DIR: "/home/ubuntu/shared/data/vcf"
-GENO_FILE_PREFIX: "CHR1_22_PID107822"
+VCF_FILE: "CHR{chr}_PID107822.vcf.gz"
+CHROMS: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, X]
+
+# output: per-chromosome file sets are named FILE_STEM, the merged aligned file set GENO_FILE_PREFIX
 OUT_DIR: "/home/ubuntu/shared/data/plink/v20261030"
+FILE_STEM: "CHR{chr}_PID107822"
+GENO_FILE_PREFIX: "CHR1_22X_PID107822"
+KEEP_GRCH37: false  # keep the intermediate GRCh37 pgen file sets
+
+# sex (1=male, 2=female) for chrX handling, matched to VCF sample IDs by COVARIATES_ID_COL
 COVARIATES_FILE: "/home/ubuntu/shared/data/covariates/Masterkey_DATASET_PID107822_20250526.txt.gz"
+COVARIATES_ID_COL: "PID"
+COVARIATES_SEX_COL: "Sex"
+MIN_SEX_MATCH: 0.95  # fail if fewer VCF samples than this fraction have sex 1/2 in COVARIATES_FILE
+
+# VCF import QC (as in src/vcf2pfile.sh)
+QC:
+  dosage_field: "DS"
+  hard_call_threshold: 0.1  # plink2 default; determines missingness of hard calls in .bed
+  min_info: 0.3
+  maf: 0.005
+  geno: 0.05
+  hwe: "1E-50 0.001 midp"
+
+# references
+REF_FASTA_GRCH38: "/home/ubuntu/shared/data/reference/data/GRCh38_full_analysis_set_plus_decoy_hla.fa.zst"
+TRIPLE_LIFTOVER: "/opt/triple-liftOver/tripleliftover_v133.pl"
+PCA_REF_PREFIX: "src/pca/pgen/hgdp1kgp_chr_autosomes.pca_unrelated"  # HGDP+1KG (GRCh38) PCA basis
+N_PC: 40
+PCA_MIN_OVERLAP: 0.8  # fail if fewer reference PCA variants than this fraction are found in the data
+
+PLINK2: "plink2"
+
+# per-rule resources; rules not listed use "default"
+RESOURCES:
+  default: {threads: 8, mem_mb: 16000}
+  vcf2pgen_b37: {threads: 8, mem_mb: 16000}
+  merge_aligned: {threads: 16, mem_mb: 64000}
+  pca_project: {threads: 16, mem_mb: 32000}

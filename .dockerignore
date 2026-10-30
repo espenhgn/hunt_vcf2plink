@@ -1,0 +1,5 @@
+.git
+.snakemake
+test/output
+**/*.tar
+**/*.tar.gz

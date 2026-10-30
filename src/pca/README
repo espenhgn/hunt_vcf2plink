@@ -1,0 +1,7 @@
+First run:
+calculate_pc.sh
+to calculate PCs in the reference genotypes (HGDP + 1KG, used for imputation) using only unrelated subjects and SNPs genotyped in both HUSK batches (SNPs which are input for imputation).
+
+Then project all HUSK samples on the basis defined by the reference PCs:
+inhouse_pca_insample.sh
+

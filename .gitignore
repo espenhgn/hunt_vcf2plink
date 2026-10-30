@@ -1,0 +1,7 @@
+*.tar
+*.tar.gz
+*.zip
+
+# workflow outputs
+test/output/
+.snakemake/
