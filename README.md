@@ -72,7 +72,7 @@ resources/liftover/                                            downloaded UCSC l
 1. Get the container image. Either pull it (if the lab allows outbound access to ghcr.io):
 
    ```bash
-   apptainer pull hunt_vcf2plink_0.1.0.sif docker://ghcr.io/espenhgn/hunt_vcf2plink:0.1.0
+   apptainer pull hunt_vcf2plink_latest.sif docker://ghcr.io/espenhgn/hunt_vcf2plink:latest
    ```
 
    or build the `.sif` outside the lab and import it through the HUNT Cloud file
@@ -83,9 +83,9 @@ resources/liftover/                                            downloaded UCSC l
 
    ```bash
    cd /home/ubuntu/shared/github/espenhgn/hunt_vcf2plink
-   apptainer exec --bind /home/ubuntu/shared hunt_vcf2plink_0.1.0.sif \
+   apptainer exec --bind /home/ubuntu/shared hunt_vcf2plink_latest.sif \
        snakemake --profile profiles/hunt -n   # dry run first
-   apptainer exec --bind /home/ubuntu/shared hunt_vcf2plink_0.1.0.sif \
+   apptainer exec --bind /home/ubuntu/shared hunt_vcf2plink_latest.sif \
        snakemake --profile profiles/hunt
    ```
 

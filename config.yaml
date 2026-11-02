@@ -1,5 +1,5 @@
 ROOT_DIR: "/home/ubuntu/shared/github/espenhgn/hunt_vcf2plink"  # repo checkout; relative paths below resolve against it
-DOCKER: "ghcr.io/espenhgn/hunt_vcf2plink:0.1.0"
+DOCKER: "ghcr.io/espenhgn/hunt_vcf2plink:0.1.2"
 
 # input: per-chromosome VCF files (GRCh37), {chr} is replaced by each entry of CHROMS
 VCF_DIR: "/home/ubuntu/shared/data/vcf"
@@ -64,9 +64,9 @@ PLINK2: "plink2"
 RESOURCES:
   default: {threads: 8, mem_mb: 16000}
   vcf2pgen_b37: {threads: 8, mem_mb: 16000}
-  merge_aligned: {threads: 16, mem_mb: 64000}
+  merge_aligned: {threads: 16, mem_mb: 56000}
   pca_ld_prune: {threads: 8, mem_mb: 32000}
   pca_merge: {threads: 8, mem_mb: 16000}
-  king: {threads: 32, mem_mb: 64000}
-  pca_basis: {threads: 32, mem_mb: 64000}
+  king: {threads: 24, mem_mb: 56000}
+  pca_basis: {threads: 24, mem_mb: 56000}
   pca_project: {threads: 16, mem_mb: 16000}
