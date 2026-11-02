@@ -6,7 +6,8 @@ rule report:
         align=[f"{QC}/align/chr{c}.tsv" for c in CHROMS],
         b37_logs=[f"{LOGS}/vcf2pgen_b37/chr{c}.log" for c in CHROMS],
         merged=f"{MERGED}.pvar",
-        pca=rules.pca_overlap.output.summary,
+        pca=[rules.pca_basis.output.summary]
+        + ([rules.king.output.summary] if PCA_CFG["unrelated"] else []),
     output:
         f"{QC}/report.tsv",
     log:

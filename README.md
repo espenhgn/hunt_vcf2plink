@@ -1,8 +1,8 @@
 # hunt_vcf2plink
 
 Snakemake workflow that converts the per-chromosome HUNT VCF files (GRCh37, imputed
-dosages) to PLINK file sets in GRCh38, and projects samples onto a reference PCA basis
-(HGDP + 1000 Genomes, PC1–40). It runs in a container in HUNT Cloud.
+dosages) to PLINK file sets in GRCh38, and computes in-sample genetic principal
+components (PC1–40). It runs in a container in HUNT Cloud.
 
 ## Steps
 
@@ -28,12 +28,22 @@ Per chromosome (1–22, X):
 Then:
 
 - **Merge** the aligned per-chromosome file sets.
-- **PCA projection** onto the HGDP+1KG basis (autosomal SNPs, GRCh38; made by
-  [src/pca/calculate_pc.sh](src/pca/calculate_pc.sh)). The files
-  `hgdp1kgp_chr_autosomes.pca_unrelated.{acount,eigenvec.allele}` are not in this
-  repository; they're expected in `/home/ubuntu/shared/data/scripts/pca/`
-  (`PCA_REF_PREFIX`). The workflow fails if fewer than `PCA_MIN_OVERLAP` of the
-  reference variants are found in the data.
+- **In-sample PCA** of the autosomes, as in
+  [src/imputation.stats.sh](src/imputation.stats.sh) (settings under `PCA` in the
+  config):
+  1. LD pruning per chromosome of the GRCh38 all-variant file sets (`PCA.input`;
+     indels and strand-ambiguous SNPs are kept): `--maf 0.01 --geno 0.02
+     --indep-pairwise 500kb 0.2`, estimated in a random subset of 10,000 samples
+     (`--thin-indiv-count`, fixed `PCA.seed`). Variants with duplicated IDs are excluded.
+  2. KING kinship (`--make-king-table`) on the pruned variants, and a maximal set of
+     samples without pairs above `PCA.king_cutoff` (2^-4.5, 3rd degree;
+     `--king-cutoff-table`).
+  3. LD pruning again, as in step 1 but in unrelated samples only.
+  4. PCA with variant weights in the unrelated samples (`--pca allele-wts approx 40`).
+  5. Projection of all samples onto this basis (`--score ... variance-standardize`).
+
+  With `PCA.unrelated: false`, steps 2–3 are skipped and the PCA uses all samples,
+  which is fine if relatedness is moderate.
 - **Report** with variant counts per step and chromosome.
 
 The workflow is adapted from the original scripts in [src/](src/). `.pgen` file sets
@@ -47,8 +57,11 @@ PAR is coded `PAR1`/`PAR2`, as in PLINK 2.0 a7. PAR variant IDs start with `X:`.
 GRCh38/CHR{chr}_PID107822.{pgen,pvar,psam,bed,bim,fam}         all lifted variants, per chromosome
 GRCh38.aligned/CHR{chr}_PID107822.{pgen,pvar,psam}             aligned SNPs, per chromosome
 GRCh38.aligned/CHR1_22X_PID107822.{pgen,pvar,psam,bed,bim,fam} aligned SNPs, merged
-pca/CHR1_22X_PID107822.pcs.tsv                                 IID, PC1..PC40
+pca/CHR1_22X_PID107822.pcs.tsv                                 IID, PC1..PC40 (all samples)
 pca/CHR1_22X_PID107822.sscore                                  plink2 --score output
+pca/CHR1_22X_PID107822.pca_basis.*                             PCA in unrelated samples: eigenvec(.allele), eigenval, acount
+pca/CHR1_22X_PID107822.kin0                                    KING pairs above PCA.king_cutoff
+pca/CHR1_22X_PID107822.king.cutoff.{in,out}.id                 unrelated / excluded samples
 qc/report.tsv                                                  counts per step
 logs/                                                          per-rule logs
 resources/liftover/                                            downloaded UCSC liftOver and chain file
@@ -103,13 +116,12 @@ UCSC liftOver and the chain files are free for non-commercial use only; see the
 [UCSC license](https://genome.ucsc.edu/license/).
 
 The GRCh38 reference FASTA (`GRCh38_full_analysis_set_plus_decoy_hla.fa.zst`,
-`REF_FASTA_GRCH38`) and the PCA reference (`PCA_REF_PREFIX`) must already be on the
-system.
+`REF_FASTA_GRCH38`) must already be on the system.
 
 ## Testing
 
 [test/](test/) holds a small synthetic data set (100 samples, chr22 and chrX; no real
-data) and a 10-PC basis from a simulated reference panel, both made by
+data; two pseudo-populations and ten parent–offspring pairs), made by
 [test/make_test_data.py](test/make_test_data.py), and a config for it. The test
 downloads liftOver and the chain file from UCSC:
 
@@ -157,4 +169,4 @@ total 540454964
 
 - PLINK 2.0: Chang et al. (2015) GigaScience 4:7.
 - triple-liftOver method: Sheng et al. (2022) bioRxiv, doi:10.1101/2022.02.19.481174.
-- HGDP + 1KG reference: Koenig et al. (2024) Genome Research (gnomAD HGDP+1KG callset).
+- KING: Manichaikul et al. (2010) Bioinformatics 26:2867–2873.

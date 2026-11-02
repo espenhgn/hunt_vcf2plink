@@ -27,10 +27,18 @@ QC:
 
 REF_FASTA_GRCH38: "test/data/ref/GRCh38_test.fa.zst"
 # LIFTOVER_* and CHAIN_* as in config.yaml (merged)
-# synthetic PCA basis from a simulated reference panel (test/make_test_data.py)
-PCA_REF_PREFIX: "test/data/pca/test_ref.pca_unrelated"
 N_PC: 10
-PCA_MIN_OVERLAP: 0.8
+PCA:
+  input: "GRCh38"
+  maf: 0.01
+  geno: 0.02
+  ld_window: "500kb"
+  ld_r2: 0.2
+  ld_samples: 10000
+  seed: 20261030
+  unrelated: true
+  king_cutoff: 0.044194173824159
+  approx: false  # 100 samples
 
 PLINK2: "plink2"
 
@@ -39,4 +47,8 @@ RESOURCES:
   default: {threads: 1, mem_mb: 2000}
   vcf2pgen_b37: {threads: 1, mem_mb: 2000}
   merge_aligned: {threads: 1, mem_mb: 2000}
+  pca_ld_prune: {threads: 1, mem_mb: 2000}
+  pca_merge: {threads: 1, mem_mb: 2000}
+  king: {threads: 1, mem_mb: 2000}
+  pca_basis: {threads: 1, mem_mb: 2000}
   pca_project: {threads: 1, mem_mb: 2000}

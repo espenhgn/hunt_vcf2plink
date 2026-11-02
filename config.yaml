@@ -42,10 +42,21 @@ LIFTOVER_BINARY: ""
 LIFTOVER_MD5: ""
 CHAIN_FILE: "https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz"
 CHAIN_MD5: "35887f73fe5e2231656504d1f6430900"  # from goldenPath/hg19/liftOver/md5sum.txt
-# HGDP+1KG (GRCh38) PCA basis: .acount, .eigenvec.allele (made by src/pca/calculate_pc.sh)
-PCA_REF_PREFIX: "/home/ubuntu/shared/data/scripts/pca/hgdp1kgp_chr_autosomes.pca_unrelated"
+# In-sample PCA of autosomes (as in src/imputation.stats.sh): LD-pruned common variants
+# from the GRCh38 (all variants) or GRCh38.aligned file sets; KING relatedness; PCA in
+# unrelated samples; projection of all samples onto that basis.
 N_PC: 40
-PCA_MIN_OVERLAP: 0.8  # fail if fewer reference PCA variants than this fraction are found in the data
+PCA:
+  input: "GRCh38"  # or "GRCh38.aligned" (SNPs only, no strand-ambiguous)
+  maf: 0.01
+  geno: 0.02
+  ld_window: "500kb"
+  ld_r2: 0.2
+  ld_samples: 10000  # random subset of samples (or of unrelated samples) for LD pruning
+  seed: 20261030
+  unrelated: true  # PCA basis in unrelated samples only; false: all samples, no KING
+  king_cutoff: 0.044194173824159  # 2^-4.5, 3rd-degree relatives
+  approx: true  # randomized PCA (plink2 --pca approx), for more than ~50k samples
 
 PLINK2: "plink2"
 
@@ -54,4 +65,8 @@ RESOURCES:
   default: {threads: 8, mem_mb: 16000}
   vcf2pgen_b37: {threads: 8, mem_mb: 16000}
   merge_aligned: {threads: 16, mem_mb: 64000}
-  pca_project: {threads: 16, mem_mb: 32000}
+  pca_ld_prune: {threads: 8, mem_mb: 32000}
+  pca_merge: {threads: 8, mem_mb: 16000}
+  king: {threads: 32, mem_mb: 64000}
+  pca_basis: {threads: 32, mem_mb: 64000}
+  pca_project: {threads: 16, mem_mb: 16000}

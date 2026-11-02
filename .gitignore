@@ -6,7 +6,7 @@
 test/output/
 .snakemake/
 
-# HGDP+1KG PCA reference, kept outside the repository (PCA_REF_PREFIX)
+# HGDP+1KG PCA reference for the legacy src/pca scripts (not used by the workflow)
 src/pca/pgen/
 
 # misc

@@ -38,10 +38,10 @@ def main():
     p.add_argument("--align", nargs="+", required=True)
     p.add_argument("--b37-logs", nargs="+", required=True)
     p.add_argument("--merged-pvar", required=True)
-    p.add_argument("--pca", required=True)
+    p.add_argument("--pca", nargs="+", required=True)
     args = p.parse_args()
 
-    for path in (args.sex, args.pca):
+    for path in [args.sex] + args.pca:
         for k, v in read_kv(path).items():
             print(f"# {k}\t{v}")
     print(f"# merged_aligned_variants\t{count_variants(args.merged_pvar)}")
