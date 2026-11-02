@@ -7,8 +7,6 @@ dependencies:
   - python=3.12
   - snakemake-minimal=9.27.1
   - plink2=2.0.0a.7.8
-  - ucsc-liftover=482
-  - perl=5.32.1
   - gawk=5.4.1
   - zstd
   - coreutils

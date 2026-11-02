@@ -29,8 +29,21 @@ QC:
 
 # references
 REF_FASTA_GRCH38: "/home/ubuntu/shared/data/reference/data/GRCh38_full_analysis_set_plus_decoy_hla.fa.zst"
-TRIPLE_LIFTOVER: "/opt/triple-liftOver/tripleliftover_v133.pl"
-PCA_REF_PREFIX: "src/pca/pgen/hgdp1kgp_chr_autosomes.pca_unrelated"  # HGDP+1KG (GRCh38) PCA basis
+# Official UCSC liftOver builds (https://hgdownload.soe.ucsc.edu/admin/exe/), picked by
+# the platform running the workflow and downloaded into OUT_DIR/resources/liftover.
+# LIFTOVER_BINARY (URL or local path, with optional LIFTOVER_MD5) overrides this.
+LIFTOVER_URL_BASE: "https://hgdownload.soe.ucsc.edu/admin/exe"
+LIFTOVER_PLATFORMS:
+  Linux-x86_64: {dir: "linux.x86_64.v479", md5: "d51f4411f4410ab8a02a8aac3cb9c058"}
+  Linux-aarch64: {dir: "linux.aarch64.v492", md5: "5d9936b042b9b4d8f2a5f435a22eef37"}
+  Darwin-arm64: {dir: "macOSX.arm64", md5: ""}  # not versioned by UCSC
+  Darwin-x86_64: {dir: "macOSX.x86_64", md5: ""}  # not versioned by UCSC
+LIFTOVER_BINARY: ""
+LIFTOVER_MD5: ""
+CHAIN_FILE: "https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz"
+CHAIN_MD5: "35887f73fe5e2231656504d1f6430900"  # from goldenPath/hg19/liftOver/md5sum.txt
+# HGDP+1KG (GRCh38) PCA basis: .acount, .eigenvec.allele (made by src/pca/calculate_pc.sh)
+PCA_REF_PREFIX: "/home/ubuntu/shared/data/scripts/pca/hgdp1kgp_chr_autosomes.pca_unrelated"
 N_PC: 40
 PCA_MIN_OVERLAP: 0.8  # fail if fewer reference PCA variants than this fraction are found in the data
 

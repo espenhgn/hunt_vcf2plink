@@ -26,10 +26,11 @@ QC:
   hwe: "1E-50 0.001 midp"
 
 REF_FASTA_GRCH38: "test/data/ref/GRCh38_test.fa.zst"
-TRIPLE_LIFTOVER: "/opt/triple-liftOver/tripleliftover_v133.pl"
-PCA_REF_PREFIX: "src/pca/pgen/hgdp1kgp_chr_autosomes.pca_unrelated"
-N_PC: 40
-PCA_MIN_OVERLAP: 0.01  # chr22 holds ~1.8% of the reference PCA variants
+# LIFTOVER_* and CHAIN_* as in config.yaml (merged)
+# synthetic PCA basis from a simulated reference panel (test/make_test_data.py)
+PCA_REF_PREFIX: "test/data/pca/test_ref.pca_unrelated"
+N_PC: 10
+PCA_MIN_OVERLAP: 0.8
 
 PLINK2: "plink2"
 

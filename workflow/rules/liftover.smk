@@ -1,7 +1,35 @@
+LIFTOVER_DIR = f"{OUT}/resources/liftover"
+
+
+localrules:
+    setup_liftover,
+
+
+rule setup_liftover:
+    """UCSC liftOver (official build for this platform) and the hg19ToHg38 chain file."""
+    output:
+        liftover=f"{LIFTOVER_DIR}/liftOver",
+        chain=f"{LIFTOVER_DIR}/hg19ToHg38.over.chain.gz",
+    params:
+        liftover=config.get("LIFTOVER_BINARY") or "",
+        liftover_md5=config.get("LIFTOVER_MD5") or "",
+        url_base=config["LIFTOVER_URL_BASE"],
+        platforms=config["LIFTOVER_PLATFORMS"],
+        chain=config["CHAIN_FILE"],
+        chain_md5=config.get("CHAIN_MD5") or "",
+    log:
+        f"{LOGS}/setup_liftover.log",
+    script:
+        "../scripts/setup_liftover.py"
+
+
 rule liftover_b38:
-    """GRCh37 -> GRCh38 with triple-liftOver (as in src/plink2_liftover.sh)."""
+    """GRCh37 -> GRCh38 with UCSC liftOver, strand flipping SNVs in inverted regions
+    (triple-liftOver method; as in src/plink2_liftover.sh)."""
     input:
-        fileset(B37, PGEN),
+        pgen=fileset(B37, PGEN),
+        liftover=rules.setup_liftover.output.liftover,
+        chain=rules.setup_liftover.output.chain,
     output:
         pgen=temp(fileset(LIFTED, PGEN)),
         summary=f"{QC}/liftover/chr{{chr}}.tsv",
@@ -9,7 +37,6 @@ rule liftover_b38:
         plink_mem=plink_mem("liftover_b38"),
         in_prefix=B37,
         out_prefix=LIFTED,
-        triple_liftover=repo_path(config["TRIPLE_LIFTOVER"]),
         work=f"{WORK}/liftover_b38/chr{{chr}}",
     threads: res("liftover_b38", "threads")
     resources:
@@ -17,7 +44,7 @@ rule liftover_b38:
     log:
         f"{LOGS}/liftover_b38/chr{{chr}}.log",
     shell:
-        "bash {SCRIPTS}/liftover.sh {PLINK2} {params.triple_liftover}"
+        "bash {SCRIPTS}/liftover.sh {PLINK2} {input.liftover} {input.chain}"
         " {params.in_prefix} {params.out_prefix} {wildcards.chr}"
         " {threads} {params.plink_mem} {params.work} {output.summary} > {log} 2>&1"
 

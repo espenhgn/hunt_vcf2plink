@@ -12,7 +12,9 @@ Per chromosome (1–22, X):
    `--geno 0.05`, `--hwe 1E-50 0.001 midp`. Sex comes from the covariates file
    (`Sex`: 1 = male, 2 = female). The PAR is split off chrX (b37) so that male PAR
    genotypes are diploid in QC.
-2. **Liftover to GRCh38** with [triple-liftOver](https://github.com/GraceSheng/triple-liftOver).
+2. **Liftover to GRCh38** with UCSC liftOver, using the triple-liftOver method
+   (Sheng et al. 2022) to find sites in regions inverted between builds: each variant
+   is lifted with its neighbouring bases ([liftover_bim.py](workflow/scripts/liftover_bim.py)).
    Variants that don't lift, or lift to another chromosome, are dropped. SNVs in
    regions inverted between builds are strand flipped. Inverted indels are dropped,
    as are variants with duplicated IDs. On chrX the PAR is merged into X for the
@@ -26,9 +28,12 @@ Per chromosome (1–22, X):
 Then:
 
 - **Merge** the aligned per-chromosome file sets.
-- **PCA projection** onto the HGDP+1KG basis in [src/pca/pgen](src/pca/pgen)
-   (autosomal SNPs, GRCh38). The workflow fails if fewer than `PCA_MIN_OVERLAP` of
-   the reference variants are found in the data.
+- **PCA projection** onto the HGDP+1KG basis (autosomal SNPs, GRCh38; made by
+  [src/pca/calculate_pc.sh](src/pca/calculate_pc.sh)). The files
+  `hgdp1kgp_chr_autosomes.pca_unrelated.{acount,eigenvec.allele}` are not in this
+  repository; they're expected in `/home/ubuntu/shared/data/scripts/pca/`
+  (`PCA_REF_PREFIX`). The workflow fails if fewer than `PCA_MIN_OVERLAP` of the
+  reference variants are found in the data.
 - **Report** with variant counts per step and chromosome.
 
 The workflow is adapted from the original scripts in [src/](src/). `.pgen` file sets
@@ -46,6 +51,7 @@ pca/CHR1_22X_PID107822.pcs.tsv                                 IID, PC1..PC40
 pca/CHR1_22X_PID107822.sscore                                  plink2 --score output
 qc/report.tsv                                                  counts per step
 logs/                                                          per-rule logs
+resources/liftover/                                            downloaded UCSC liftOver and chain file
 ```
 
 ## Running in HUNT Cloud
@@ -77,20 +83,35 @@ Snakemake can also run on the host and start the container per job, using
 
 ## Requirements
 
-All tools are in the container ([docker/Dockerfile](docker/Dockerfile),
-[environment.yml](environment.yml)): Snakemake 9.27, PLINK 2.0 a7.8,
-triple-liftOver (commit `f781ed6`) with UCSC liftOver 482 and the
-`hg19ToHg38` chain file. The GRCh38 reference FASTA
-(`GRCh38_full_analysis_set_plus_decoy_hla.fa.zst`) is not in the image; set
-`REF_FASTA_GRCH38`.
+The container ([docker/Dockerfile](docker/Dockerfile),
+[environment.yml](environment.yml)) has Snakemake 9.27 and PLINK 2.0 a7.8.
+
+UCSC liftOver and the chain file aren't in the container. The first rule
+(`setup_liftover`) downloads them into `OUT_DIR/resources/liftover/`, which needs
+outbound access to hgdownload.soe.ucsc.edu:
+
+- `liftOver`: the official UCSC build from <https://hgdownload.soe.ucsc.edu/admin/exe/>
+  for the platform the workflow runs on (`LIFTOVER_PLATFORMS`): `linux.x86_64.v479`,
+  `linux.aarch64.v492`, `macOSX.arm64`, `macOSX.x86_64`. The versioned Linux builds
+  are checked against md5 sums; the macOS directories are not versioned by UCSC.
+  `LIFTOVER_BINARY` can be set to another URL or a local path.
+- `hg19ToHg38.over.chain.gz` from
+  <https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/> (`CHAIN_FILE`; URL or
+  local path), checked against `CHAIN_MD5`.
 
 UCSC liftOver and the chain files are free for non-commercial use only; see the
 [UCSC license](https://genome.ucsc.edu/license/).
 
+The GRCh38 reference FASTA (`GRCh38_full_analysis_set_plus_decoy_hla.fa.zst`,
+`REF_FASTA_GRCH38`) and the PCA reference (`PCA_REF_PREFIX`) must already be on the
+system.
+
 ## Testing
 
 [test/](test/) holds a small synthetic data set (100 samples, chr22 and chrX; no real
-data) made by [test/make_test_data.py](test/make_test_data.py), and a config for it:
+data) and a 10-PC basis from a simulated reference panel, both made by
+[test/make_test_data.py](test/make_test_data.py), and a config for it. The test
+downloads liftOver and the chain file from UCSC:
 
 ```bash
 docker build --platform linux/amd64 -f docker/Dockerfile -t hunt_vcf2plink:test .
@@ -135,5 +156,5 @@ total 540454964
 ## Citations
 
 - PLINK 2.0: Chang et al. (2015) GigaScience 4:7.
-- triple-liftOver: Sheng et al. (2022) bioRxiv, doi:10.1101/2022.02.19.481174.
+- triple-liftOver method: Sheng et al. (2022) bioRxiv, doi:10.1101/2022.02.19.481174.
 - HGDP + 1KG reference: Koenig et al. (2024) Genome Research (gnomAD HGDP+1KG callset).

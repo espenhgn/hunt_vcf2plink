@@ -1,25 +1,28 @@
 #!/bin/bash
-# Lift a GRCh37 pgen file set to GRCh38 using triple-liftOver
-# (github.com/GraceSheng/triple-liftOver), adapted from src/plink2_liftover.sh.
+# Lift a GRCh37 pgen file set to GRCh38 with UCSC liftOver, using the triple-liftOver
+# method to find sites in inverted regions (liftover_bim.py). Adapted from
+# src/plink2_liftover.sh.
 #
 # Variants that fail to lift, or lift to another chromosome, are dropped. SNVs in
 # regions inverted between builds are strand flipped; inverted non-SNVs are dropped,
-# as flipping does not fix them. On chrX the PAR is merged back into X first, since
-# triple-liftOver does not know the PAR1/PAR2 chromosome codes.
+# as flipping does not fix them. On chrX the PAR is merged back into X first, so that
+# PAR variants are lifted and position-sorted together with X.
 #
-# usage: liftover.sh PLINK2 TRIPLE_LIFTOVER IN_PREFIX OUT_PREFIX CHR THREADS MEMORY WORKDIR SUMMARY
+# usage: liftover.sh PLINK2 LIFTOVER CHAIN IN_PREFIX OUT_PREFIX CHR THREADS MEMORY WORKDIR SUMMARY
 
 set -Eeuo pipefail
 
 PLINK2=$1
-TRIPLE_LIFTOVER=$2
-IN=$3
-OUT=$4
-CHR=$5
-THREADS=$6
-MEMORY=$7
-WORK=$8
-SUMMARY=$9
+LIFTOVER=$2
+CHAIN=$3
+IN=$4
+OUT=$5
+CHR=$6
+THREADS=$7
+MEMORY=$8
+WORK=$9
+SUMMARY=${10}
+SCRIPTS=$(dirname "$0")
 
 mkdir -p "${WORK}"
 
@@ -28,12 +31,11 @@ if [[ "${CHR}" == "X" ]]; then
     merge_par="--merge-par"
 fi
 
-# Drop all variants with duplicated IDs: triple-liftOver needs unique IDs, and
+# Drop all variants with duplicated IDs: the liftover output is keyed by ID, and
 # --update-map fails on duplicates even when --rm-dup is given in the same run.
 awk '!/^#/ {n[$3]++} END {for (id in n) if (n[id] > 1) print id}' "${IN}.pvar" > "${WORK}/duplicated_ids.txt"
 n_dup_ids=$(awk 'END {print NR}' "${WORK}/duplicated_ids.txt")
 
-# triple-liftOver takes a .bim file
 ${PLINK2} --pfile "${IN}" ${merge_par} \
     --exclude "${WORK}/duplicated_ids.txt" \
     --make-just-bim \
@@ -41,23 +43,18 @@ ${PLINK2} --pfile "${IN}" ${merge_par} \
     --memory "${MEMORY}" \
     --out "${WORK}/in"
 
-perl "${TRIPLE_LIFTOVER}" \
-    --bim "${WORK}/in.bim" \
-    --base hg19 \
-    --target hg38 \
-    --outprefix "${WORK}/lift"
-
-# columns: snpid chr pos_[hg38] pos_[hg19] category. The file is sorted numerically
-# on chr, so for chrX the header line is not necessarily first; match it by name.
+# columns: snpid chr pos_target pos_base category (lifted/inverted), with header
 invr="${WORK}/lift.invr.txt"
-if [[ ! -s "${invr}" ]]; then
-    echo "ERROR: triple-liftOver wrote no output (${invr})" >&2
-    exit 1
-fi
+python "${SCRIPTS}/liftover_bim.py" \
+    --bim "${WORK}/in.bim" \
+    --liftover "${LIFTOVER}" \
+    --chain "${CHAIN}" \
+    --work-dir "${WORK}/liftover" \
+    --out "${invr}"
 
 awk -v w="${WORK}" '
     NR == FNR {snv[$2] = ($5 ~ /^[ACGT]$/ && $6 ~ /^[ACGT]$/); next}
-    $1 == "snpid" {next}
+    FNR == 1 {next}
     $5 == "inverted" && !snv[$1] {print $1 > (w "/inverted_nonsnv.txt"); next}
     {print $1 > (w "/extract.txt"); print $1 "\t" $3 > (w "/update_map.txt")}
     $5 == "inverted" {print $1 > (w "/flip.txt")}' \
@@ -72,7 +69,7 @@ if [[ "${n_lifted}" -eq 0 ]]; then
 fi
 
 # combine all flags in a single pass (results identical to the sequential steps
-# suggested on github.com/GraceSheng/triple-liftOver)
+# suggested for triple-liftOver)
 ${PLINK2} --pfile "${IN}" ${merge_par} \
     --extract "${WORK}/extract.txt" \
     --update-map "${WORK}/update_map.txt" \

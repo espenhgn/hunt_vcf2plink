@@ -1,9 +1,7 @@
-# hunt_vcf2plink: snakemake, plink2, triple-liftOver (with UCSC liftOver) and the workflow.
+# hunt_vcf2plink: snakemake, plink2 and the workflow. UCSC liftOver and the chain
+# file are downloaded by the workflow (rule setup_liftover), not part of the image.
 # Build from the repository root:
 #   docker build --platform linux/amd64 -f docker/Dockerfile -t ghcr.io/espenhgn/hunt_vcf2plink:0.1.0 .
-#
-# UCSC liftOver and its chain files are free for non-commercial use only
-# (https://genome.ucsc.edu/license/).
 
 FROM mambaorg/micromamba:2.0.5
 
@@ -14,19 +12,7 @@ RUN micromamba install -y -n base -f /tmp/environment.yml && \
 
 USER root
 
-# triple-liftOver has no releases; pin a commit. Its bundled liftOver binary is
-# replaced by the pinned bioconda build.
-ARG TRIPLE_LIFTOVER_COMMIT=f781ed6c5d016eac75b8be92938003207cdf5f0d
-RUN python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/GraceSheng/triple-liftOver/archive/${TRIPLE_LIFTOVER_COMMIT}.tar.gz', '/tmp/tlo.tar.gz')" && \
-    mkdir -p /opt/triple-liftOver && \
-    tar -xzf /tmp/tlo.tar.gz -C /opt/triple-liftOver --strip-components=1 && \
-    rm /tmp/tlo.tar.gz && \
-    ln -sf /opt/conda/bin/liftOver /opt/triple-liftOver/library/liftOver && \
-    test -s /opt/triple-liftOver/library/chainfiles/hg19ToHg38.over.chain.gz && \
-    chmod -R a+rX /opt/triple-liftOver
-
 COPY workflow /opt/hunt_vcf2plink/workflow
-COPY src/pca/pgen /opt/hunt_vcf2plink/src/pca/pgen
 COPY config.yaml /opt/hunt_vcf2plink/config.yaml
 RUN chmod -R a+rX /opt/hunt_vcf2plink
 

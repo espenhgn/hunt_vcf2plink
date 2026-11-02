@@ -5,3 +5,10 @@
 # workflow outputs
 test/output/
 .snakemake/
+
+# HGDP+1KG PCA reference, kept outside the repository (PCA_REF_PREFIX)
+src/pca/pgen/
+
+# misc
+vcf_file_header_hunt.txt
+

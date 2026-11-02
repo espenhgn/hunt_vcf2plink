@@ -1,7 +1,7 @@
 # Convert per-chromosome HUNT VCF files (GRCh37) to PLINK file sets in GRCh38,
 # and project samples onto a reference PCA basis (HGDP+1KG).
 #
-# Steps per chromosome: VCF -> pgen (GRCh37) -> triple-liftOver -> GRCh38 (all variants)
+# Steps per chromosome: VCF -> pgen (GRCh37) -> UCSC liftOver -> GRCh38 (all variants)
 #   -> SNPs aligned to the GRCh38 reference sequence; then merge and PCA projection.
 
 from pathlib import Path
