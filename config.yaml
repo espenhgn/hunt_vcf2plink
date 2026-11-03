@@ -60,13 +60,14 @@ PCA:
 
 PLINK2: "plink2"
 
-# per-rule resources; rules not listed use "default"
+# per-rule resources; rules not listed use "default". plink2 gets 90% of mem_mb as
+# --memory. Keep each mem_mb within the profile's mem_mb (profiles/hunt/config.yaml).
 RESOURCES:
   default: {threads: 8, mem_mb: 16000}
   vcf2pgen_b37: {threads: 8, mem_mb: 16000}
-  merge_aligned: {threads: 16, mem_mb: 56000}
+  merge_aligned: {threads: 16, mem_mb: 48000}
   pca_ld_prune: {threads: 8, mem_mb: 32000}
   pca_merge: {threads: 8, mem_mb: 16000}
-  king: {threads: 24, mem_mb: 56000}
-  pca_basis: {threads: 24, mem_mb: 56000}
+  king: {threads: 24, mem_mb: 24000}  # ~2 bits per genotype, plus working space
+  pca_basis: {threads: 24, mem_mb: 48000}
   pca_project: {threads: 16, mem_mb: 16000}

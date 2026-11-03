@@ -1,10 +1,11 @@
 # Snakemake profile for a HUNT Cloud lab VM (no job scheduler; local execution).
-# Adjust cores and mem_mb to the VM size. Usage:
+# Set cores to the VM's CPUs (nproc) and mem_mb a bit below its available memory
+# (free -m); Snakemake only starts jobs whose RESOURCES mem_mb fit within it. Usage:
 #   snakemake --profile profiles/hunt
 snakefile: workflow/Snakefile
 cores: 32
 resources:
-  - mem_mb=230000
+  - mem_mb=54000  # 64 GB VM
 printshellcmds: true
 keep-going: true
 rerun-incomplete: true
